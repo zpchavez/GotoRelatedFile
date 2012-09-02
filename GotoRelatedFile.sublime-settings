@@ -1,0 +1,36 @@
+{
+	"roots": ["application"],
+	"file_types": {
+		"controller": {
+			"paths": [
+				"classes/controller",
+				"controller"
+			]
+		},
+		"model": {
+			"paths": [
+				"classes/model",
+				"model"
+			]
+		},
+		"view": {
+			"paths": [
+				"classes/view",
+				"view"
+			]
+		},
+		"template": {
+			"paths": [
+				"templates"
+			]
+		},
+		"test": {
+			"paths": [
+				"tests"
+			],
+			"suffixes": [
+				"Test"
+			]
+		}
+	}
+}
