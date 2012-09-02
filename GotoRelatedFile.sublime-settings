@@ -1,36 +1,48 @@
 {
-	"roots": ["application"],
-	"file_types": {
-		"controller": {
-			"paths": [
-				"classes/controller",
-				"controller"
-			]
-		},
-		"model": {
-			"paths": [
-				"classes/model",
-				"model"
-			]
-		},
-		"view": {
-			"paths": [
-				"classes/view",
-				"view"
-			]
-		},
-		"template": {
-			"paths": [
-				"templates"
-			]
-		},
-		"test": {
-			"paths": [
-				"tests"
-			],
-			"suffixes": [
-				"Test"
-			]
+	"enabled_configurations": [
+		"kohana"
+	],
+	"configurations": {
+		"kohana": {
+			"app_dir": "application",
+			"file_types": {
+				"controller": {
+					"path": "classes/controller",
+					"rel_patterns": {
+						"template": "${app_path}/${type_path}/${file_from_type_path}/*",
+						"view"    : "${app_path}/${type_path}/${file_from_type_path}/*",
+						"test"    : "${app_path}/${type_path}/${file_from_app_path}Test*"
+					}
+				},
+				"model": {
+					"path": "classes/model",
+					"rel_patterns": {
+						"test"    : "${app_path}/${type_path}/${file_from_app_path}Test*"
+					}
+				},
+				"view": {
+					"path": "classes/view",
+					"rel_patterns": {
+						"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
+						"template":   "${app_path}/${type_path}/${file_from_type_path}*",
+						"test"    :   "${app_path}/${type_path}/${file_from_app_path}Test*"
+					}
+				},
+				"template": {
+					"path": "templates",
+					"rel_patterns": {
+						"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
+						"view"      : "${app_path}/${type_path}/${file_from_type_path}*"
+					}
+				},
+				"test": {
+					"path": "tests",
+					"suffix": "Test",
+					"rel_patterns": {
+						"*": "${app_path}/${file_from_type_path}*"
+					}
+				}
+			}
 		}
 	}
 }

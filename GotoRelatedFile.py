@@ -2,7 +2,18 @@ import sublime
 import sublime_plugin
 import os
 import re
-from glob import glob
+import glob
+from string import Template
+
+
+def insensitive_glob(pattern):
+    """
+        Case insensitive glob.
+        From http://stackoverflow.com/questions/8151300/ignore-case-in-glob-on-linux.
+    """
+    def either(c):
+        return '[%s%s]' % (c.lower(), c.upper()) if c.isalpha() else c
+    return glob.glob(''.join(map(either, pattern)))
 
 
 class GotoRelatedFileCommand(sublime_plugin.TextCommand):
@@ -23,10 +34,13 @@ class FileSelector(object):
         self.settings = sublime.load_settings('GotoRelatedFile.sublime-settings')
         self.window = window
         self.view = window.active_view()
-        self.root = self._get_root_path()
         self.current_file = self.view.file_name()
-        self.related_files = self._get_related_files()
-        self.files_found = bool(self.related_files)
+        self.configuration = self._get_configuration()
+        if self.configuration:
+            self.related_files = self._get_related_files()
+            self.files_found = bool(self.related_files)
+        else:
+            self.files_found = False
 
     def select(self, index):
         if index != -1:
@@ -35,110 +49,87 @@ class FileSelector(object):
     def get_items(self):
         return self.related_files
 
-    def _get_root_path(self):
+    def _get_configuration(self):
         """
-            Search through the possible root directories until one is found that
-            is included in the current file's path.  Return that directory, or None
-            if not found.
+            Search through the enabled configurations until one is found whose root
+            directory is contained in the current file's path.  Return the details
+            for that configuration, or None if no matches found.
+
+            Also saves the full path to the app dir to self.app_path.
         """
-        possible_roots = self.settings.get('roots')
-        current_file = self.view.file_name()
-        for possible_root in possible_roots:
-            search_string = os.sep + possible_root + os.sep
-            match = re.search('^(.*?%s)' % re.escape(search_string), current_file)
+        if not self.current_file:
+            return None
+
+        configs = self.settings.get('enabled_configurations', [])
+
+        valid_configs = {}
+        for config in configs:
+            config_details = self.settings.get('configurations').get(config)
+            if config_details:
+                valid_configs[config] = config_details
+
+        for config_key in valid_configs:
+            possible_app_dir = valid_configs[config_key]['app_dir']
+            search_string = os.sep + possible_app_dir + os.sep
+            match = re.search('^(.*?%s)' % re.escape(search_string), self.current_file)
             if match:
-                return match.group(0)
+                self.app_path = match.group(0)
+                return valid_configs[config_key]
         return None
+
+    def _get_current_file_type(self):
+        for file_type, details in self.configuration['file_types'].items():
+            search_string = os.path.join(self.app_path, details['path'])
+            match = re.search('^%s' % re.escape(search_string), self.current_file)
+            if match:
+                return file_type
 
     def _get_related_files(self):
         """
-            Return a list of lists where element 0 is the file type
-            and element 1 is the path.
+            Return list of lists with element 0 the file type
+            and element 1 the path.
         """
-        if self.root is None or self.current_file is None:
-            return None
-
         current_file_type = self._get_current_file_type()
-        if current_file_type is None:
-            return None
+        current_file_type_details = self.configuration \
+            .get('file_types', {}) \
+            .get(current_file_type, {})
+        current_file_type_path = current_file_type_details.get('path', '')
+        suffix = current_file_type_details.get('suffix', '')
+
+        current_file_no_ext = os.path.splitext(self.current_file)[0]
+        current_file_no_suffix = re.sub('%s$' % re.escape(suffix), '', current_file_no_ext)
+        current_file = re.sub('%s$' % re.escape(suffix), '', current_file_no_suffix)
+        type_path = os.path.join(self.app_path, current_file_type_path)
+
+        # Create template vars used in settings file.
+        file_from_type_path = current_file.replace(type_path, '', 1)
+        file_from_app_path = current_file.replace(self.app_path, '', 1)
+        dir_from_type_path = os.path.dirname(file_from_type_path)
+
+        patterns = self.configuration.get('file_types', {}) \
+            .get(current_file_type, {}) \
+            .get('rel_patterns', [])
 
         related_files = []
-        file_types = self.settings.get('file_types')
-        for file_type, details in file_types.items():
-            if current_file_type == file_type:
-                continue
+        for file_type, pattern in patterns.items():
+            file_type_details = self.configuration \
+                .get('file_types', {}) \
+                .get(file_type, {})
+            rel_file_type_path = file_type_details.get('path', '')
 
-            related_file = self._get_related_file(
-                self.current_file,
-                current_file_type,
-                file_type,
-                details['paths']
+            template = Template(pattern)
+            glob_pattern = template.safe_substitute(
+                app_path=self.app_path,
+                type_path=rel_file_type_path,
+                file_from_type_path=file_from_type_path,
+                file_from_app_path=file_from_app_path,
+                dir_from_type_path=dir_from_type_path
             )
-
-            if related_file:
-                related_files.append([file_type, related_file])
-
+            matches = insensitive_glob(os.path.realpath(glob_pattern))
+            file_matches = [
+                ['%s (%s)' % (file_type, os.path.basename(match)), match]
+                for match in matches
+                if os.path.isfile(match)
+            ]
+            related_files += file_matches
         return related_files
-
-    def _get_related_file(self, file_path, from_type, to_type, to_paths):
-        """
-            Get the full path to a file of type to_type give nthe path
-            to a file of type from_type and possible target paths to_paths.
-        """
-        file_path_no_ext = os.path.splitext(file_path)[0]
-        file_path_no_root = file_path_no_ext.replace(self.root, '', 1)
-        filename = os.path.basename(file_path_no_ext)
-
-        if from_type == 'test':
-            file_path_no_root = self._remove_test_suffix(file_path_no_root)
-            filename = self._remove_test_suffix(filename)
-
-        for to_path in to_paths:
-            if to_type == 'test':
-                path_parts = [self.root, to_path, file_path_no_root]
-            else:
-                path_parts = [self.root, to_path, filename]
-            pattern = os.path.realpath(os.sep.join(path_parts)) + '*'
-            matches = glob(pattern)
-            file_matches = [match for match in matches if os.path.isfile(match)]
-            if file_matches:
-                return file_matches[0]
-        return None
-
-    def _filter_out_base_path(self, file_type, filename):
-        """Return filename without the root and file type path."""
-        filtered_filename = filename.replace(self.root, '', 1)
-
-        file_types = self.settings.get('file_types')
-        for path in file_types[file_type]['paths']:
-            if re.match('^%s' % re.escape(path), filtered_filename):
-                filtered_filename = filtered_filename.replace(path, '', 1)
-        return filtered_filename
-
-    def _remove_test_suffix(self, filename):
-        """Remove the test suffix from a base filename without the extension."""
-        file_types = self.settings.get('file_types')
-        for suffix in file_types['test']['suffixes']:
-            pattern = re.escape(suffix) + '$'
-            if re.search(pattern, filename):
-                desuffixed_filename = re.sub(pattern, '', filename)
-                return desuffixed_filename
-        return filename
-
-    def _get_current_file_type(self):
-        """
-            Get the current file type (as defined in settings), or None if it
-            doesn't appear to match any of the file types.
-        """
-        if self.root is None or self.current_file is None:
-            return None
-
-        file_types = self.settings.get('file_types')
-
-        for file_type, details in file_types.items():
-            for path in details['paths']:
-                search_string = self.root + path
-                match = re.search('^%s' % search_string, self.current_file)
-                if match:
-                    return file_type
-        return None
