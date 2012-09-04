@@ -1,6 +1,7 @@
 import sublime
 import sublime_plugin
 import os
+import platform
 import re
 import glob
 from string import Template
@@ -11,6 +12,9 @@ def insensitive_glob(pattern):
         Case insensitive glob.
         From http://stackoverflow.com/questions/8151300/ignore-case-in-glob-on-linux.
     """
+    if platform.system() == 'Windows':
+        return glob.glob(pattern)
+
     def either(c):
         return '[%s%s]' % (c.lower(), c.upper()) if c.isalpha() else c
     return glob.glob(''.join(map(either, pattern)))
@@ -79,7 +83,7 @@ class FileSelector(object):
 
     def _get_current_file_type(self):
         for file_type, details in self.configuration['file_types'].items():
-            search_string = os.path.join(self.app_path, details['path'])
+            search_string = os.path.join(self.app_path, details['path']).replace('/', os.sep)
             match = re.search('^%s' % re.escape(search_string), self.current_file)
             if match:
                 return file_type
@@ -90,10 +94,14 @@ class FileSelector(object):
             and element 1 the path.
         """
         current_file_type = self._get_current_file_type()
+
+        if current_file_type is None:
+            return []
+
         current_file_type_details = self.configuration \
             .get('file_types', {}) \
             .get(current_file_type, {})
-        current_file_type_path = current_file_type_details.get('path', '')
+        current_file_type_path = current_file_type_details.get('path', '').replace('/', os.sep)
         suffix = current_file_type_details.get('suffix', '')
 
         current_file_no_ext = os.path.splitext(self.current_file)[0]
@@ -108,16 +116,16 @@ class FileSelector(object):
 
         patterns = self.configuration.get('file_types', {}) \
             .get(current_file_type, {}) \
-            .get('rel_patterns', [])
+            .get('rel_patterns', {})
 
         related_files = []
         for file_type, pattern in patterns.items():
             file_type_details = self.configuration \
                 .get('file_types', {}) \
                 .get(file_type, {})
-            rel_file_type_path = file_type_details.get('path', '')
+            rel_file_type_path = file_type_details.get('path', '').replace('/', os.sep)
 
-            template = Template(pattern)
+            template = Template(pattern.replace('/', os.sep))
             glob_pattern = template.safe_substitute(
                 app_path=self.app_path,
                 type_path=rel_file_type_path,
@@ -125,7 +133,9 @@ class FileSelector(object):
                 file_from_app_path=file_from_app_path,
                 dir_from_type_path=dir_from_type_path
             )
+            print os.path.realpath(glob_pattern)
             matches = insensitive_glob(os.path.realpath(glob_pattern))
+            print matches
             file_matches = [
                 ['%s (%s)' % (file_type, os.path.basename(match)), match]
                 for match in matches
