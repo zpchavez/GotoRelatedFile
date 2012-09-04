@@ -73,7 +73,7 @@ class FileSelector(object):
                 valid_configs[config] = config_details
 
         for config_key in valid_configs:
-            possible_app_dir = valid_configs[config_key]['app_dir']
+            possible_app_dir = valid_configs[config_key]['app_dir'].replace('/', os.sep)
             search_string = os.sep + possible_app_dir + os.sep
             match = re.search('^(.*?%s)' % re.escape(search_string), self.current_file)
             if match:
