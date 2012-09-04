@@ -5,10 +5,8 @@ are related to the current one, e.g. the views related to a controller.
 
 Installation
 ============
-GotoRelatedFile is not in package control at this time.  To install,
-add the files to a directory called GotoRelatedFile in Sublime's
-package directory (which you can find by selecting Preferences -> Browse Packages
-from the Sublime menu.)
+GotoRelatedFile is not in package control at this time.  You can add it manually
+by selecting "Package Control: Add Repository" from the Command Palette.
 
 Configuration
 =============
