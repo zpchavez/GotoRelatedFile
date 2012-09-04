@@ -133,9 +133,7 @@ class FileSelector(object):
                 file_from_app_path=file_from_app_path,
                 dir_from_type_path=dir_from_type_path
             )
-            print os.path.realpath(glob_pattern)
             matches = insensitive_glob(os.path.realpath(glob_pattern))
-            print matches
             file_matches = [
                 ['%s (%s)' % (file_type, os.path.basename(match)), match]
                 for match in matches
