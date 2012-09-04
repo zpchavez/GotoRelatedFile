@@ -1,6 +1,7 @@
 {
 	"enabled_configurations": [
-		"kohana"
+		"kohana",
+		"chaplin"
 	],
 	"configurations": {
 		"kohana": {
@@ -40,6 +41,33 @@
 					"suffix": "Test",
 					"rel_patterns": {
 						"*": "${app_path}/${file_from_type_path}*"
+					}
+				}
+			}
+		},
+		"chaplin": {
+			"app_dir": "js/app",
+			"file_types": {
+				"controller": {
+					"path": "controllers",
+					"suffix": "_controller",
+					"rel_patterns": {
+						"templates": "${app_path}/${type_path}/${file_from_type_path}/*",
+						"view"     : "${app_path}/${type_path}/${file_from_type_path}/*"
+					}
+				},
+				"templates": {
+					"path": "templates",
+					"rel_patterns": {
+						"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
+						"view"      : "${app_path}/${type_path}/${file_from_type_path}*"
+					}
+				},
+				"view": {
+					"path": "views",
+					"rel_patterns": {
+						"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
+						"template":   "${app_path}/${type_path}/${file_from_type_path}*"
 					}
 				}
 			}
