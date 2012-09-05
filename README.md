@@ -16,10 +16,14 @@ See the default settings file to see how it works.
 The placeholders used in the rel_patterns strings are:
 
    * app_path  - The absolute path to the application directory.
-   * type_path - The path to where files of the target type are found.
-   * file_from_type_path - The path to the starting file, minus the extension, relative to the type_path
-   * file_from_app_path - The path to the starting file, minus the extension, relative to the app_path.
+   * type_path - The path to where files of the target type are found, relative to the app path.
+   * suffix - The suffix of the target file type, if one is defined.
+   * file_from_type_path - The path to the starting file, minus the extension and suffix, relative to the type_path
+   * file_from_app_path - The path to the starting file, minus the extension and suffix, relative to the app_path.
    * dir_from_type_path - The path to the starting file's directory relative to the type_path
+
+GotoRelatedFile will go through the enabled_configurations and use the first one whose
+app_dir is found in the path of the current file.
 
 Usage
 =====
