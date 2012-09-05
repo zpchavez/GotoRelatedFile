@@ -102,36 +102,38 @@ class FileSelector(object):
             .get('file_types', {}) \
             .get(current_file_type, {})
         current_file_type_path = current_file_type_details.get('path', '').replace('/', os.sep)
-        suffix = current_file_type_details.get('suffix', '')
+        current_suffix = current_file_type_details.get('suffix', '')
 
         current_file_no_ext = os.path.splitext(self.current_file)[0]
-        current_file_no_suffix = re.sub('%s$' % re.escape(suffix), '', current_file_no_ext)
-        current_file = re.sub('%s$' % re.escape(suffix), '', current_file_no_suffix)
-        type_path = os.path.join(self.app_path, current_file_type_path)
+        current_file_no_suffix = re.sub('%s$' % re.escape(current_suffix), '', current_file_no_ext)
+        current_file = re.sub('%s$' % re.escape(current_suffix), '', current_file_no_suffix)
+        current_file_type_path = os.path.join(self.app_path, current_file_type_path)
 
         # Create template vars used in settings file.
-        file_from_type_path = current_file.replace(type_path, '', 1)
+        file_from_type_path = current_file.replace(current_file_type_path, '', 1)
         file_from_app_path = current_file.replace(self.app_path, '', 1)
         dir_from_type_path = os.path.dirname(file_from_type_path)
 
-        patterns = self.configuration.get('file_types', {}) \
-            .get(current_file_type, {}) \
-            .get('rel_patterns', {})
+        current_file_type_details = self.configuration.get('file_types', {}) \
+            .get(current_file_type, {})
+        patterns = current_file_type_details.get('rel_patterns', {})
 
         related_files = []
         for file_type, pattern in patterns.items():
-            file_type_details = self.configuration \
+            target_file_type_details = self.configuration \
                 .get('file_types', {}) \
                 .get(file_type, {})
-            rel_file_type_path = file_type_details.get('path', '').replace('/', os.sep)
+            target_suffix = target_file_type_details.get('suffix', '')
+            target_file_type_path = target_file_type_details.get('path', '').replace('/', os.sep)
 
             template = Template(pattern.replace('/', os.sep))
             glob_pattern = template.safe_substitute(
                 app_path=self.app_path,
-                type_path=rel_file_type_path,
+                type_path=target_file_type_path,
                 file_from_type_path=file_from_type_path,
                 file_from_app_path=file_from_app_path,
-                dir_from_type_path=dir_from_type_path
+                dir_from_type_path=dir_from_type_path,
+                suffix=target_suffix
             )
             matches = insensitive_glob(os.path.realpath(glob_pattern))
             file_matches = [
