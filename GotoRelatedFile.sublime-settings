@@ -17,7 +17,7 @@
 					"view"     : "${app_path}/${type_path}/${file_from_type_path}/*"
 				}
 			},
-			"templates": {
+			"template": {
 				"path": "templates",
 				"rel_patterns": {
 					"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
@@ -28,7 +28,7 @@
 				"path": "views",
 				"rel_patterns": {
 					"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
-					"templates":   "${app_path}/${type_path}/${file_from_type_path}*"
+					"template":   "${app_path}/${type_path}/${file_from_type_path}*"
 				}
 			}
 		}
