@@ -68,7 +68,7 @@ class FileSelector(object):
 
         valid_configs = {}
         for config in configs:
-            config_details = self.settings.get('configurations').get(config)
+            config_details = self.settings.get(config)
             if config_details:
                 valid_configs[config] = config_details
 
