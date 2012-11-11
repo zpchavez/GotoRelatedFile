@@ -20,15 +20,15 @@
 			"template": {
 				"path": "templates",
 				"rel_patterns": {
-					"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
-					"view"      : "${app_path}/${type_path}/${file_from_type_path}*"
+					"controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+					"view"      : "${app_path}/${type_path}/${file_from_type_path}.js"
 				}
 			},
 			"view": {
 				"path": "views",
 				"rel_patterns": {
-					"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
-					"template":   "${app_path}/${type_path}/${file_from_type_path}*"
+					"controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+					"template":   "${app_path}/${type_path}/${file_from_type_path}.hbs"
 				}
 			}
 		}
@@ -37,39 +37,39 @@
 		"app_dir": "application",
 		"file_types": {
 			"controller": {
-				"path": "classes/controller",
+				"path": "classes/Controller",
 				"rel_patterns": {
 					"template": "${app_path}/${type_path}/${file_from_type_path}/*",
 					"view"    : "${app_path}/${type_path}/${file_from_type_path}/*",
-					"test"    : "${app_path}/${type_path}/${file_from_app_path}${suffix}*"
+					"test"    : "${app_path}/${type_path}/${file_from_app_path}${suffix}.php"
 				}
 			},
 			"model": {
-				"path": "classes/model",
+				"path": "classes/Model",
 				"rel_patterns": {
-					"test"    : "${app_path}/${type_path}/${file_from_app_path}${suffix}*"
+					"test"    : "${app_path}/${type_path}/${file_from_app_path}${suffix}.php"
 				}
 			},
 			"view": {
-				"path": "classes/view",
+				"path": "classes/View",
 				"rel_patterns": {
-					"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
-					"template":   "${app_path}/${type_path}/${file_from_type_path}*",
-					"test"    :   "${app_path}/${type_path}/${file_from_app_path}${suffix}*"
+					"controller": "${app_path}/${type_path}/${dir_from_type_path}.php",
+					"template":   "${app_path}/${type_path}/${file_from_type_path}.mustache",
+					"test"    :   "${app_path}/${type_path}/${file_from_app_path}${suffix}.php"
 				}
 			},
 			"template": {
 				"path": "templates",
 				"rel_patterns": {
-					"controller": "${app_path}/${type_path}/${dir_from_type_path}*",
-					"view"      : "${app_path}/${type_path}/${file_from_type_path}*"
+					"controller": "${app_path}/${type_path}/${dir_from_type_path}.php",
+					"view"      : "${app_path}/${type_path}/${file_from_type_path}.php"
 				}
 			},
 			"test": {
 				"path": "tests",
 				"suffix": "Test",
 				"rel_patterns": {
-					"*": "${app_path}/${file_from_type_path}*"
+					"*": "${app_path}/${file_from_type_path}.php"
 				}
 			}
 		}

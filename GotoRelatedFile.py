@@ -48,7 +48,8 @@ class FileSelector(object):
 
     def select(self, index):
         if index != -1:
-            self.window.open_file(self.related_files[index][1])
+            selected_file = self.related_files[index][1]
+            self.window.open_file(selected_file)
 
     def get_items(self):
         return self.related_files
@@ -75,7 +76,10 @@ class FileSelector(object):
         for config_key in valid_configs:
             possible_app_dir = valid_configs[config_key]['app_dir'].replace('/', os.sep)
             search_string = os.sep + possible_app_dir + os.sep
-            match = re.search('^(.*?%s)' % re.escape(search_string), self.current_file)
+            match = re.search(
+                '^(.*?%s)' % re.escape(search_string),
+                self.current_file
+            )
             if match:
                 self.app_path = match.group(0)
                 return valid_configs[config_key]
@@ -84,7 +88,10 @@ class FileSelector(object):
     def _get_current_file_type(self):
         for file_type, details in self.configuration['file_types'].items():
             search_string = os.path.join(self.app_path, details['path']).replace('/', os.sep)
-            match = re.search('^%s' % re.escape(search_string), self.current_file)
+            match = re.search(
+                '^%s' % re.escape(search_string),
+                self.current_file
+            )
             if match:
                 return file_type
 
@@ -135,11 +142,27 @@ class FileSelector(object):
                 dir_from_type_path=dir_from_type_path,
                 suffix=target_suffix
             )
+            # Collect matches
             matches = insensitive_glob(os.path.realpath(glob_pattern))
             file_matches = [
-                ['%s (%s)' % (file_type, os.path.basename(match)), match]
+                ['Open %s (%s)' % (file_type, os.path.basename(match)), match]
                 for match in matches
                 if os.path.isfile(match)
             ]
             related_files += file_matches
+
+            # If no matches, and the glob pattern contains no '*', add as creatable file.
+            if not matches and '*' not in glob_pattern:
+                creatable_file_path = os.path.realpath(glob_pattern)
+                if os.path.isdir(os.path.dirname(creatable_file_path)):
+                    related_files.append(
+                        [
+                            'Create %s (%s)' % (
+                                file_type,
+                                os.path.basename(creatable_file_path)
+                            ),
+                            creatable_file_path
+                        ]
+                    )
+
         return related_files
