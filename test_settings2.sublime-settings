@@ -1,0 +1,62 @@
+{
+	"enabled_configurations": [
+		"config1",
+		"config3"
+	],
+
+	// Configuration definitions
+
+	"config1": {
+		"app_dir": "js/app",
+		"file_types": {
+			"template": {
+				"path": "templates",
+				"rel_patterns": {
+					"view"      : "${app_path}/${type_path}/${file_from_type_path}.js"
+				}
+			},
+			"view": {
+				"path": "views",
+				"rel_patterns": {
+					"template":   "${app_path}/${type_path}/${file_from_type_path}.hbs"
+				}
+			}
+		}
+	},
+
+	"config2": {
+		"app_dir": "application",
+		"file_types": {
+			"template": {
+				"path": "templates",
+				"rel_patterns": {
+					"view"      : "${app_path}/${type_path}/${file_from_type_path}.php"
+				}
+			},
+			"view": {
+				"path": "views",
+				"rel_patterns": {
+					"template":   "${app_path}/${type_path}/${file_from_type_path}.mustache"
+				}
+			}
+		}
+	},
+
+	"config3": {
+		"app_dir": "application",
+		"file_types": {
+			"template": {
+				"path": "templates",
+				"rel_patterns": {
+					"view"      : "${app_path}/${type_path}/${file_from_type_path}.php"
+				}
+			},
+			"view": {
+				"path": "views",
+				"rel_patterns": {
+					"template":   "${app_path}/${type_path}/${file_from_type_path}.html"
+				}
+			}
+		}
+	}
+}

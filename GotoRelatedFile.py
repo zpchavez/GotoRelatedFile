@@ -25,7 +25,12 @@ class GotoRelatedFileCommand(sublime_plugin.TextCommand):
     def run(self, edit):
         window = sublime.active_window()
 
-        selector = FileSelector(window)
+        selector = FileSelector(
+            window,
+            'GotoRelatedFile.sublime-settings',
+            window.active_view().file_name()
+        )
+
         if selector.files_found:
             window.show_quick_panel(selector.get_items(), selector.select)
         else:
@@ -34,11 +39,11 @@ class GotoRelatedFileCommand(sublime_plugin.TextCommand):
 
 class FileSelector(object):
 
-    def __init__(self, window):
-        self.settings = sublime.load_settings('GotoRelatedFile.sublime-settings')
+    def __init__(self, window, config_file, starting_file):
+        self.settings = sublime.load_settings(config_file)
         self.window = window
         self.view = window.active_view()
-        self.current_file = self.view.file_name()
+        self.current_file = starting_file
         self.configuration = self._get_configuration()
         if self.configuration:
             self.related_files = self._get_related_files()
@@ -73,7 +78,7 @@ class FileSelector(object):
             if config_details:
                 valid_configs[config] = config_details
 
-        for config_key in valid_configs:
+        for config_key in sorted(valid_configs):
             possible_app_dir = valid_configs[config_key]['app_dir'].replace('/', os.sep)
             search_string = os.sep + possible_app_dir + os.sep
             match = re.search(
