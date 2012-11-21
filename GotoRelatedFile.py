@@ -39,11 +39,10 @@ class GotoRelatedFileCommand(sublime_plugin.TextCommand):
 
 class FileSelector(object):
 
-    def __init__(self, window, config_file, starting_file):
+    def __init__(self, window, config_file, current_file):
         self.settings = sublime.load_settings(config_file)
         self.window = window
-        self.view = window.active_view()
-        self.current_file = starting_file
+        self.current_file = current_file
         self.configuration = self._get_configuration()
         if self.configuration:
             self.related_files = self._get_related_files()
@@ -100,19 +99,13 @@ class FileSelector(object):
             if match:
                 return file_type
 
-    def _get_related_files(self):
+    def _get_template_var_values(self):
         """
-            Return list of lists with element 0 the file type
-            and element 1 the path.
+            Get a dictionary mapping the supported template variables and their
+            values for the active file.
         """
-        current_file_type = self._get_current_file_type()
+        current_file_type_details = self._get_file_type_details(self._get_current_file_type())
 
-        if current_file_type is None:
-            return []
-
-        current_file_type_details = self.configuration \
-            .get('file_types', {}) \
-            .get(current_file_type, {})
         current_file_type_path = current_file_type_details.get('path', '').replace('/', os.sep)
         current_suffix = current_file_type_details.get('suffix', '')
 
@@ -121,20 +114,55 @@ class FileSelector(object):
         current_file = re.sub('%s$' % re.escape(current_suffix), '', current_file_no_suffix)
         current_file_type_path = os.path.join(self.app_path, current_file_type_path)
 
-        # Create template vars used in settings file.
         file_from_type_path = current_file.replace(current_file_type_path, '', 1)
         file_from_app_path = current_file.replace(self.app_path, '', 1)
         dir_from_type_path = os.path.dirname(file_from_type_path)
 
-        current_file_type_details = self.configuration.get('file_types', {}) \
-            .get(current_file_type, {})
+        return {
+            'file_from_type_path': file_from_type_path,
+            'file_from_app_path': file_from_app_path,
+            'dir_from_type_path': dir_from_type_path
+        }
+
+    def _get_file_type_details(self, file_type):
+        file_type_details = self.configuration \
+            .get('file_types', {}) \
+            .get(file_type, {})
+
+        return file_type_details
+
+    def _is_creatable_file(self, glob_pattern):
+        if '*' not in glob_pattern:
+            creatable_file_path = os.path.realpath(glob_pattern)
+            return os.path.isdir(os.path.dirname(creatable_file_path))
+
+        return False
+
+    def _get_related_files(self):
+        """
+            Return list of lists with element 0 the file description
+            and element 1 the path.
+        """
+        current_file_type = self._get_current_file_type()
+
+        if current_file_type is None:
+            return
+
+        current_file_type_details = self._get_file_type_details(
+            current_file_type
+        )
+
+        if not current_file_type_details:
+            return
+
+        template_vars = self._get_template_var_values()
+
         patterns = current_file_type_details.get('rel_patterns', {})
 
         related_files = []
         for file_type, pattern in patterns.items():
-            target_file_type_details = self.configuration \
-                .get('file_types', {}) \
-                .get(file_type, {})
+
+            target_file_type_details = self._get_file_type_details(file_type)
             target_suffix = target_file_type_details.get('suffix', '')
             target_file_type_path = target_file_type_details.get('path', '').replace('/', os.sep)
 
@@ -142,32 +170,31 @@ class FileSelector(object):
             glob_pattern = template.safe_substitute(
                 app_path=self.app_path,
                 type_path=target_file_type_path,
-                file_from_type_path=file_from_type_path,
-                file_from_app_path=file_from_app_path,
-                dir_from_type_path=dir_from_type_path,
+                file_from_type_path=template_vars['file_from_type_path'],
+                file_from_app_path=template_vars['file_from_app_path'],
+                dir_from_type_path=template_vars['dir_from_type_path'],
                 suffix=target_suffix
             )
+
             # Collect matches
             matches = insensitive_glob(os.path.realpath(glob_pattern))
-            file_matches = [
+
+            related_files += [
                 ['Open %s (%s)' % (file_type, os.path.basename(match)), match]
                 for match in matches
                 if os.path.isfile(match)
             ]
-            related_files += file_matches
 
-            # If no matches, and the glob pattern contains no '*', add as creatable file.
-            if not matches and '*' not in glob_pattern:
+            if (not matches and self._is_creatable_file(glob_pattern)):
                 creatable_file_path = os.path.realpath(glob_pattern)
-                if os.path.isdir(os.path.dirname(creatable_file_path)):
-                    related_files.append(
-                        [
-                            'Create %s (%s)' % (
-                                file_type,
-                                os.path.basename(creatable_file_path)
-                            ),
+                related_files.append(
+                    [
+                        'Create %s (%s)' % (
+                            file_type,
                             creatable_file_path
-                        ]
-                    )
+                        ),
+                        creatable_file_path
+                    ]
+                )
 
         return related_files
