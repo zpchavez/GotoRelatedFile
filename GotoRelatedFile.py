@@ -191,7 +191,7 @@ class FileSelector(object):
                     [
                         'Create %s (%s)' % (
                             file_type,
-                            creatable_file_path
+                            os.path.basename(creatable_file_path)
                         ),
                         creatable_file_path
                     ]
