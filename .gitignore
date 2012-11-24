@@ -2,3 +2,5 @@
 *.pyc
 *.sublime-project
 *.sublime-workspace
+test_data/application
+test_data/js
