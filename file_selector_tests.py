@@ -11,22 +11,109 @@ class TestFileSelector(unittest.TestCase):
     def setUp(self):
         self.test_data_path = os.sep.join([os.getcwd(), 'test_data'])
         self.settings_file = 'test_settings.sublime-settings'
-        self.settings_file_alt = 'test_settings_alt.sublime-settings'
+
+        self.setUpDefaultSettings()
+
+        self.deleteTempTestFiles()
 
     def tearDown(self):
+        self.deleteTempTestFiles()
+
+    def setUpDefaultSettings(self):
+        settings = sublime.load_settings(self.settings_file)
+
+        settings.erase('enabled_configurations')
+        settings.erase('config1')
+        settings.erase('config2')
+        settings.erase('config3')
+
+        settings.set('enabled_configurations', ['config1', 'config2', 'config3'])
+        settings.set('config1', self.getJsConfig())
+        settings.set('config2', self.getPyConfig())
+        settings.set('config3', self.getPyConfigNoControllers())
+
+    def deleteTempTestFiles(self):
         py_test_dir = os.sep.join([self.test_data_path, 'application'])
         js_test_dir = os.sep.join([self.test_data_path, 'js'])
+
         if os.path.isdir(py_test_dir):
             shutil.rmtree(py_test_dir)
         if os.path.isdir(js_test_dir):
             shutil.rmtree(js_test_dir)
 
-    def createFile(self, path):
+    def createFile(self, path, content=''):
         file = open(path, 'w')
         if file:
+            file.write(content)
             file.close()
         else:
             raise Exception('Could not create file "%s".' % path)
+
+    def getJsConfig(self):
+        return {
+            "app_dir": "js/app",
+            "file_types": {
+                "controller": {
+                    "path": "controllers",
+                    "suffix": "_controller",
+                    "rel_patterns": {
+                        "view": "${app_path}/${type_path}/${file_from_type_path}/*",
+                        "template": "${app_path}/${type_path}/${file_from_type_path}/*"
+                    }
+                },
+                "template": {
+                    "path": "templates",
+                    "rel_patterns": {
+                        "controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+                        "view": "${app_path}/${type_path}/${file_from_type_path}.js"
+                    }
+                },
+                "view": {
+                    "path": "views",
+                    "rel_patterns": {
+                        "controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+                        "template":   "${app_path}/${type_path}/${file_from_type_path}.hbs"
+                    }
+                }
+            }
+        }
+
+    def getPyConfig(self):
+        return {
+            "app_dir": "application",
+            "file_types": {
+                "controller": {
+                    "path": "controllers",
+                    "rel_patterns": {
+                        "view": "${app_path}/${type_path}/${file_from_type_path}/*",
+                        "template": "${app_path}/${type_path}/${file_from_type_path}/*"
+                    }
+                },
+                "template": {
+                    "path": "templates",
+                    "rel_patterns": {
+                        "controller": "${app_path}/${type_path}/${dir_from_type_path}.py",
+                        "view": "${app_path}/${type_path}/${file_from_type_path}.py"
+                    }
+                },
+                "view": {
+                    "path": "views",
+                    "rel_patterns": {
+                        "controller": "${app_path}/${type_path}/${dir_from_type_path}.py",
+                        "template":   "${app_path}/${type_path}/${file_from_type_path}.html"
+                    }
+                }
+            }
+        }
+
+    def getPyConfigNoControllers(self):
+        pyConfig = self.getPyConfig()
+        del pyConfig['file_types']['controller']
+        return pyConfig
+
+    def createSettingsWith1stPyConfigDisabled(self):
+        settings = sublime.load_settings(self.settings_file)
+        settings.set('enabled_configurations', ['config1', 'config3'])
 
     def setUpFilesForPyConfig(self):
         """
@@ -108,10 +195,10 @@ class TestFileSelector(unittest.TestCase):
         )
 
     def testConfigsNotEnabledAreNotConsidered(self):
-        # Path matches config2 and config3, but config2 is not enabled.
+        self.createSettingsWith1stPyConfigDisabled()
         file_selector = FileSelector(
             sublime.active_window(),
-            self.settings_file_alt,
+            self.settings_file,
             '/path/to/application/views/view.php'
         )
 
