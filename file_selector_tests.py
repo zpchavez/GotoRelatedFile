@@ -12,7 +12,7 @@ class TestFileSelector(unittest.TestCase):
         self.test_data_path = os.sep.join([os.getcwd(), 'test_data'])
         self.settings_file = 'test_settings.sublime-settings'
 
-        self.setUpDefaultSettings()
+        self.createDefaultSettings()
 
         self.deleteTempTestFiles()
 
@@ -38,7 +38,7 @@ class TestFileSelector(unittest.TestCase):
 
         return settings
 
-    def setUpDefaultSettings(self):
+    def createDefaultSettings(self):
         settings = self.resetSettings()
 
         settings.set('enabled_configurations', ['js', 'py', 'py-no-controllers'])
@@ -46,12 +46,14 @@ class TestFileSelector(unittest.TestCase):
         settings.set('py', self.getPyConfig())
         settings.set('py-no-controllers', self.getPyConfigNoControllers())
 
+        return settings
+
     def createSettingsWith1stPyConfigDisabled(self):
-        settings = self.resetSettings()
+        settings = self.createDefaultSettings()
         settings.set('enabled_configurations', ['js', 'py-no-controllers'])
 
     def createJsSettingsWithTopLevelModules(self):
-        settings = self.resetSettings()
+        settings = self.createDefaultSettings()
 
         config = self.getJsConfig()
         config['app_dir'] = 'js/{%}'
@@ -60,7 +62,7 @@ class TestFileSelector(unittest.TestCase):
         settings.set('js', config)
 
     def createJsSettingsWithModuleDirWithinTypePaths(self):
-        settings = self.resetSettings()
+        settings = self.createDefaultSettings()
 
         config = self.getJsConfig()
         config['file_types']['template']['path'] = 'modules/{%}/templates'
@@ -278,6 +280,8 @@ class TestFileSelector(unittest.TestCase):
             '/path/to/application/views/view.php'
         )
 
+        self.assertNotEquals(file_selector.configuration, None)
+
         self.assertEquals(
             file_selector.configuration,
             file_selector.settings.get('py')
@@ -290,6 +294,8 @@ class TestFileSelector(unittest.TestCase):
             self.settings_file,
             '/path/to/application/views/view.php'
         )
+
+        self.assertNotEquals(file_selector.configuration, None)
 
         self.assertEquals(
             file_selector.configuration,
