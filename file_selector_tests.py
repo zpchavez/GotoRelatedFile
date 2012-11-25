@@ -19,19 +19,6 @@ class TestFileSelector(unittest.TestCase):
     def tearDown(self):
         self.deleteTempTestFiles()
 
-    def setUpDefaultSettings(self):
-        settings = sublime.load_settings(self.settings_file)
-
-        settings.erase('enabled_configurations')
-        settings.erase('config1')
-        settings.erase('config2')
-        settings.erase('config3')
-
-        settings.set('enabled_configurations', ['config1', 'config2', 'config3'])
-        settings.set('config1', self.getJsConfig())
-        settings.set('config2', self.getPyConfig())
-        settings.set('config3', self.getPyConfigNoControllers())
-
     def deleteTempTestFiles(self):
         py_test_dir = os.sep.join([self.test_data_path, 'application'])
         js_test_dir = os.sep.join([self.test_data_path, 'js'])
@@ -40,6 +27,48 @@ class TestFileSelector(unittest.TestCase):
             shutil.rmtree(py_test_dir)
         if os.path.isdir(js_test_dir):
             shutil.rmtree(js_test_dir)
+
+    def resetSettings(self):
+        settings = sublime.load_settings(self.settings_file)
+
+        settings.erase('enabled_configurations')
+        settings.erase('config1')
+        settings.erase('config2')
+        settings.erase('config3')
+
+        return settings
+
+    def setUpDefaultSettings(self):
+        settings = self.resetSettings()
+
+        settings.set('enabled_configurations', ['config1', 'config2', 'config3'])
+        settings.set('config1', self.getJsConfig())
+        settings.set('config2', self.getPyConfig())
+        settings.set('config3', self.getPyConfigNoControllers())
+
+    def createSettingsWith1stPyConfigDisabled(self):
+        settings = self.resetSettings()
+        settings.set('enabled_configurations', ['config1', 'config3'])
+
+    def createJsSettingsWithTopLevelModules(self):
+        settings = self.resetSettings()
+
+        config = self.getJsConfig()
+        config['app_dir'] = 'js/{%}'
+
+        settings.set('enabled_configurations', ['js'])
+        settings.set('js', config)
+
+    def createJsSettingsWithModuleDirWithinTypePaths(self):
+        settings = self.resetSettings()
+
+        config = self.getJsConfig()
+        config['template']['path'] = 'modules/{%}/templates'
+        config['view']['path'] = 'modules/{%}/views'
+        config['controller']['path'] = 'modules/{%}/controllers'
+
+        settings.set('enabled_configurations', ['js'])
+        settings.set('js', config)
 
     def createFile(self, path, content=''):
         file = open(path, 'w')
@@ -111,10 +140,6 @@ class TestFileSelector(unittest.TestCase):
         del pyConfig['file_types']['controller']
         return pyConfig
 
-    def createSettingsWith1stPyConfigDisabled(self):
-        settings = sublime.load_settings(self.settings_file)
-        settings.set('enabled_configurations', ['config1', 'config3'])
-
     def setUpFilesForPyConfig(self):
         """
             Set up the following files:
@@ -137,6 +162,70 @@ class TestFileSelector(unittest.TestCase):
         self.createFile(self.controller_path)
         self.createFile(self.view_path)
         self.createFile(self.template_path)
+
+    def setUpFilesWithTopLevelModules(self):
+        """
+            Set up the following files:
+            test_data/js/admin/controllers/foo_controller.js
+            test_data/js/admin/views/foo/bar.js
+            test_data/js/public/controllers/foo_controller.js
+            test_data/js/public/views/foo/baz.js
+
+            and save their paths to instance variables.
+        """
+        admin_base_path = os.sep.join([self.test_data_path, 'js', 'admin'])
+        public_base_path = os.sep.join([self.test_data_path, 'js', 'public'])
+
+        os.makedirs(os.sep.join([admin_base_path, 'controllers']))
+        os.makedirs(os.sep.join([admin_base_path, 'views', 'foo']))
+        os.makedirs(os.sep.join([public_base_path, 'controllers']))
+        os.makedirs(os.sep.join([public_base_path, 'views', 'foo']))
+
+        self.admin_controller_path = os.sep.join(
+            [admin_base_path, 'controllers', 'foo_controller.js']
+        )
+        self.admin_view_path = os.sep.join([admin_base_path, 'views', 'foo', 'bar.js'])
+        self.public_controller_path = os.sep.join(
+            [public_base_path, 'controllers', 'foo_controller.js']
+        )
+        self.public_view_path = os.sep.join([public_base_path, 'views', 'foo', 'baz.js'])
+
+        self.createFile(self.admin_controller_path)
+        self.createFile(self.admin_view_path)
+        self.createFile(self.public_controller_path)
+        self.createFile(self.public_view_path)
+
+    def setUpFilesWithModuleDirWithinTypePaths(self):
+        """
+            Set up the following files:
+            test_data/js/modules/admin/controllers/foo_controller.js
+            test_data/js/modules/admin/views/foo/bar.js
+            test_data/js/modules/public/controllers/foo_controller.js
+            test_data/js/modules/public/views/foo/baz.js
+
+            and save their paths to instance variables.
+        """
+        admin_base_path = os.sep.join([self.test_data_path, 'js', 'modules', 'admin'])
+        public_base_path = os.sep.join([self.test_data_path, 'js', 'modules', 'public'])
+
+        os.makedirs(os.sep.join([admin_base_path, 'controllers']))
+        os.makedirs(os.sep.join([admin_base_path, 'views', 'foo']))
+        os.makedirs(os.sep.join([public_base_path, 'controllers']))
+        os.makedirs(os.sep.join([public_base_path, 'views', 'foo']))
+
+        self.admin_controller_path = os.sep.join(
+            [admin_base_path, 'controllers', 'foo_controller.js']
+        )
+        self.admin_view_path = os.sep.join([admin_base_path, 'views', 'foo', 'bar.js'])
+        self.public_controller_path = os.sep.join(
+            [public_base_path, 'controllers', 'foo_controller.js']
+        )
+        self.public_view_path = os.sep.join([public_base_path, 'views', 'foo', 'baz.js'])
+
+        self.createFile(self.admin_controller_path)
+        self.createFile(self.admin_view_path)
+        self.createFile(self.public_controller_path)
+        self.createFile(self.public_view_path)
 
     def setUpFooFilesForJsConfig(self):
         """
@@ -289,3 +378,19 @@ class TestFileSelector(unittest.TestCase):
         self.assertEquals(related_files[0][1], self.controller_path)
         self.assertEquals(related_files[0][0], 'Create controller (bar_controller.js)')
         # No option to create template, since target directory does not exist.
+
+    def testAppDirCanContainWildcardStringToSpecifyModuleDirectories(self):
+        self.createJsSettingsWithTopLevelModules()
+        self.setUpFilesWithTopLevelModules()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.admin_view_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+        self.assertEquals(len(related_files), 1)
+        self.assertEquals(related_files[0][1], self.admin_controller_path)
