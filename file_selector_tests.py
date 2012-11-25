@@ -63,9 +63,9 @@ class TestFileSelector(unittest.TestCase):
         settings = self.resetSettings()
 
         config = self.getJsConfig()
-        config['template']['path'] = 'modules/{%}/templates'
-        config['view']['path'] = 'modules/{%}/views'
-        config['controller']['path'] = 'modules/{%}/controllers'
+        config['file_types']['template']['path'] = 'modules/{%}/templates'
+        config['file_types']['view']['path'] = 'modules/{%}/views'
+        config['file_types']['controller']['path'] = 'modules/{%}/controllers'
 
         settings.set('enabled_configurations', ['js'])
         settings.set('js', config)
@@ -205,8 +205,8 @@ class TestFileSelector(unittest.TestCase):
 
             and save their paths to instance variables.
         """
-        admin_base_path = os.sep.join([self.test_data_path, 'js', 'modules', 'admin'])
-        public_base_path = os.sep.join([self.test_data_path, 'js', 'modules', 'public'])
+        admin_base_path = os.sep.join([self.test_data_path, 'js', 'app', 'modules', 'admin'])
+        public_base_path = os.sep.join([self.test_data_path, 'js', 'app', 'modules', 'public'])
 
         os.makedirs(os.sep.join([admin_base_path, 'controllers']))
         os.makedirs(os.sep.join([admin_base_path, 'views', 'foo']))
@@ -382,6 +382,22 @@ class TestFileSelector(unittest.TestCase):
     def testAppDirCanContainWildcardStringToSpecifyModuleDirectories(self):
         self.createJsSettingsWithTopLevelModules()
         self.setUpFilesWithTopLevelModules()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.admin_view_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+        self.assertEquals(len(related_files), 1)
+        self.assertEquals(related_files[0][1], self.admin_controller_path)
+
+    def testTypePathCanContainWildcardStringToSpecifyModuleDirectories(self):
+        self.createJsSettingsWithModuleDirWithinTypePaths()
+        self.setUpFilesWithModuleDirWithinTypePaths()
 
         file_selector = FileSelector(
             sublime.active_window(),

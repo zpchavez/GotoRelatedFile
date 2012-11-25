@@ -42,6 +42,7 @@ class FileSelector(object):
     def __init__(self, window, config_file, current_file):
         self.settings = sublime.load_settings(config_file)
         self.window = window
+        self.wildcard_vals_in_type_path = []
         self.current_file = current_file
         self.configuration = self._get_configuration()
         if self.configuration:
@@ -93,13 +94,41 @@ class FileSelector(object):
 
     def _get_current_file_type(self):
         for file_type, details in self.configuration['file_types'].items():
-            search_string = os.path.join(self.app_path, details['path']).replace('/', os.sep)
+            type_path = self._get_file_type_path(details['path'], self.current_file)
+
+            if not type_path:
+                continue
+
+            search_string = os.path.join(
+                    self.app_path,
+                    type_path
+                ).replace('/', os.sep)
+
             match = re.search(
                 '^%s' % re.escape(search_string),
                 self.current_file
             )
+
             if match:
                 return file_type
+
+    def _get_file_type_path(self, path_pattern, file_path):
+        """
+        Get the file type path given the path pattern and the path of
+        a file of that type.  Paths with a {%} wildcard will be replaced
+        with the actual value used in the file path.
+
+        """
+        if '{%}' not in path_pattern:
+            return path_pattern
+
+        match = re.search(
+            path_pattern.replace('{%}', '([^' + os.sep + ']+)'),
+            file_path
+        )
+        if match:
+            self.wildcard_vals_in_type_path = match.groups()
+            return match.group(0)
 
     def _get_template_var_values(self):
         """
@@ -108,7 +137,11 @@ class FileSelector(object):
         """
         current_file_type_details = self._get_file_type_details(self._get_current_file_type())
 
-        current_file_type_path = current_file_type_details.get('path', '').replace('/', os.sep)
+        current_file_type_path = self._get_file_type_path(
+            current_file_type_details.get('path', '').replace('/', os.sep),
+            self.current_file
+        )
+
         current_suffix = current_file_type_details.get('suffix', '')
 
         current_file_no_ext = os.path.splitext(self.current_file)[0]
@@ -166,7 +199,11 @@ class FileSelector(object):
 
             target_file_type_details = self._get_file_type_details(file_type)
             target_suffix = target_file_type_details.get('suffix', '')
+
             target_file_type_path = target_file_type_details.get('path', '').replace('/', os.sep)
+
+            for val in self.wildcard_vals_in_type_path:
+                target_file_type_path = target_file_type_path.replace('{%}', val, 1)
 
             template = Template(pattern.replace('/', os.sep))
             glob_pattern = template.safe_substitute(
