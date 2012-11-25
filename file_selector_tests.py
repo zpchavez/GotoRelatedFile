@@ -32,23 +32,23 @@ class TestFileSelector(unittest.TestCase):
         settings = sublime.load_settings(self.settings_file)
 
         settings.erase('enabled_configurations')
-        settings.erase('config1')
-        settings.erase('config2')
-        settings.erase('config3')
+        settings.erase('js')
+        settings.erase('py')
+        settings.erase('py-no-controllers')
 
         return settings
 
     def setUpDefaultSettings(self):
         settings = self.resetSettings()
 
-        settings.set('enabled_configurations', ['config1', 'config2', 'config3'])
-        settings.set('config1', self.getJsConfig())
-        settings.set('config2', self.getPyConfig())
-        settings.set('config3', self.getPyConfigNoControllers())
+        settings.set('enabled_configurations', ['js', 'py', 'py-no-controllers'])
+        settings.set('js', self.getJsConfig())
+        settings.set('py', self.getPyConfig())
+        settings.set('py-no-controllers', self.getPyConfigNoControllers())
 
     def createSettingsWith1stPyConfigDisabled(self):
         settings = self.resetSettings()
-        settings.set('enabled_configurations', ['config1', 'config3'])
+        settings.set('enabled_configurations', ['js', 'py-no-controllers'])
 
     def createJsSettingsWithTopLevelModules(self):
         settings = self.resetSettings()
@@ -271,7 +271,7 @@ class TestFileSelector(unittest.TestCase):
         self.createFile(self.view_path)
 
     def testConfigurationSetToFirstMatchingAppPath(self):
-        # Path matches config2 and config3, but 2 is first.
+        # Path matches py and py-no-controllers, but 2 is first.
         file_selector = FileSelector(
             sublime.active_window(),
             self.settings_file,
@@ -280,7 +280,7 @@ class TestFileSelector(unittest.TestCase):
 
         self.assertEquals(
             file_selector.configuration,
-            file_selector.settings.get('config2')
+            file_selector.settings.get('py')
         )
 
     def testConfigsNotEnabledAreNotConsidered(self):
@@ -293,7 +293,7 @@ class TestFileSelector(unittest.TestCase):
 
         self.assertEquals(
             file_selector.configuration,
-            file_selector.settings.get('config3')
+            file_selector.settings.get('py-no-controllers')
         )
 
     def testBasicRelPatternTemplateVars(self):
