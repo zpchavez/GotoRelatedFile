@@ -88,7 +88,7 @@ class FileSelector(object):
                 self.current_file
             )
             if match:
-                self.app_path = match.group(0)
+                self.app_path = match.group(0).rstrip(os.sep)
                 return valid_configs[config_key]
         return None
 
@@ -156,9 +156,9 @@ class FileSelector(object):
 
         current_file_type_path = os.path.join(self.app_path, current_file_type_path)
 
-        file_from_type_path = current_file.replace(current_file_type_path, '', 1)
-        file_from_app_path = current_file.replace(self.app_path, '', 1)
-        dir_from_type_path = os.path.dirname(file_from_type_path)
+        file_from_type_path = current_file.replace(current_file_type_path, '', 1).strip(os.sep)
+        file_from_app_path = current_file.replace(self.app_path, '', 1).strip(os.sep)
+        dir_from_type_path = os.path.dirname(file_from_type_path).strip(os.sep)
 
         return {
             'base_filename': os.path.basename(current_file),
