@@ -7,10 +7,10 @@
 	// Configuration definitions
 
 	"chaplin": {
-		"app_dir": "js/app",
+		"app_dir": "httpdocs/_media",
 		"file_types": {
 			"controller": {
-				"path": "controllers",
+				"path": "js/{%}/controllers",
 				"suffix": "_controller",
 				"rel_patterns": {
 					"templates": "${app_path}/${type_path}/${file_from_type_path}/*",
@@ -18,17 +18,25 @@
 				}
 			},
 			"template": {
-				"path": "templates",
+				"path": "js/{%}/templates",
 				"rel_patterns": {
-					"controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+					"controller": "${app_path}/${type_path}/${dir_from_type_path}.js",
 					"view"      : "${app_path}/${type_path}/${file_from_type_path}.js"
 				}
 			},
 			"view": {
-				"path": "views",
+				"path": "js/{%}/views",
 				"rel_patterns": {
-					"controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
-					"template":   "${app_path}/${type_path}/${file_from_type_path}.hbs"
+					"controller": "${app_path}/${type_path}/${dir_from_type_path}.js",
+					"template"  : "${app_path}/${type_path}/${file_from_type_path}.hbs",
+					"scss"      : "${app_path}/${type_path}/${file_from_type_path}.scss"
+				}
+			},
+			"scss": {
+				"path": "scss/pages",
+				"prefix": "_",
+				"rel_patterns": {
+					"view" : "${app_path}/js/app/views/${file_from_type_path}.js"
 				}
 			}
 		}
@@ -51,7 +59,7 @@
 				}
 			},
 			"view": {
-				"path": "classes/View",
+				"path": "classes/View/Page",
 				"rel_patterns": {
 					"controller": "${app_path}/${type_path}/${dir_from_type_path}.php",
 					"template":   "${app_path}/${type_path}/${file_from_type_path}.mustache",
