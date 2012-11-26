@@ -52,6 +52,21 @@ class TestFileSelector(unittest.TestCase):
         settings = self.createDefaultSettings()
         settings.set('enabled_configurations', ['js', 'py-no-controllers'])
 
+    def createJsSettingsWithControllerPrefixInsteadOfSuffix(self):
+        settings = self.createDefaultSettings()
+
+        config = self.getJsConfig()
+        del config['file_types']['controller']['suffix']
+        config['file_types']['controller']['prefix'] = 'controller_'
+
+        config['file_types']['template']['rel_patterns']['controller'] = \
+            "${app_path}/${type_path}/${dir_from_type_path}.js"
+
+        config['file_types']['view']['rel_patterns']['controller'] = \
+            "${app_path}/${type_path}/${dir_from_type_path}.js"
+
+        settings.set('js', config)
+
     def createJsSettingsWithTopLevelModules(self):
         settings = self.createDefaultSettings()
 
@@ -95,14 +110,14 @@ class TestFileSelector(unittest.TestCase):
                 "template": {
                     "path": "templates",
                     "rel_patterns": {
-                        "controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+                        "controller": "${app_path}/${type_path}/${dir_from_type_path}.js",
                         "view": "${app_path}/${type_path}/${file_from_type_path}.js"
                     }
                 },
                 "view": {
                     "path": "views",
                     "rel_patterns": {
-                        "controller": "${app_path}/${type_path}/${dir_from_type_path}${suffix}.js",
+                        "controller": "${app_path}/${type_path}/${dir_from_type_path}.js",
                         "template":   "${app_path}/${type_path}/${file_from_type_path}.hbs"
                     }
                 }
@@ -251,6 +266,28 @@ class TestFileSelector(unittest.TestCase):
         self.createFile(self.view_path)
         self.createFile(self.template_path)
 
+    def setUpFooFilesForJsConfigUsingControllerPrefix(self):
+        """
+            Set up the following files:
+            test_data/js/app/controllers/controller_foo.js
+            test_data/js/app/views/foo/bar.js
+            test_data/js/app/templates/foo/bar.hbs
+
+            and save their paths to instance variables.
+        """
+        base_path = os.sep.join([self.test_data_path, 'js', 'app'])
+
+        os.makedirs(os.sep.join([base_path, 'controllers']))
+        os.makedirs(os.sep.join([base_path, 'views', 'foo']))
+        os.makedirs(os.sep.join([base_path, 'templates', 'foo']))
+
+        self.controller_path = os.sep.join([base_path, 'controllers', 'controller_foo.js'])
+        self.view_path = os.sep.join([base_path, 'views', 'foo', 'bar.js'])
+        self.template_path = os.sep.join([base_path, 'templates', 'foo', 'bar.hbs'])
+        self.createFile(self.controller_path)
+        self.createFile(self.view_path)
+        self.createFile(self.template_path)
+
     def setUpBarFilesForJsConfig(self):
         """
             Set up the following files:
@@ -273,7 +310,7 @@ class TestFileSelector(unittest.TestCase):
         self.createFile(self.view_path)
 
     def testConfigurationSetToFirstMatchingAppPath(self):
-        # Path matches py and py-no-controllers, but 2 is first.
+        # Path matches py and py-no-controllers, but py is first.
         file_selector = FileSelector(
             sublime.active_window(),
             self.settings_file,
@@ -351,10 +388,43 @@ class TestFileSelector(unittest.TestCase):
 
         related_files = file_selector.related_files
         related_paths = [select_option[1] for select_option in related_files]
+
         self.assertTrue(self.controller_path in related_paths)
 
     def testSuffixRemovedFromValueOfFileFromTypePathTemplateVar(self):
         self.setUpFooFilesForJsConfig()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.controller_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+        self.assertEquals(related_files[0][1], self.template_path)
+        self.assertEquals(related_files[1][1], self.view_path)
+
+    def testPrefixTemplateVarReplacedWithPrefixOfTargetFile(self):
+        self.createJsSettingsWithControllerPrefixInsteadOfSuffix()
+        self.setUpFooFilesForJsConfigUsingControllerPrefix()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.view_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+        related_paths = [select_option[1] for select_option in related_files]
+        self.assertTrue(self.controller_path in related_paths)
+
+    def testPrefixRemovedFromValueOfFileFromTypePathTemplateVar(self):
+        self.createJsSettingsWithControllerPrefixInsteadOfSuffix()
+        self.setUpFooFilesForJsConfigUsingControllerPrefix()
 
         file_selector = FileSelector(
             sublime.active_window(),
@@ -399,6 +469,7 @@ class TestFileSelector(unittest.TestCase):
 
         related_files = file_selector.related_files
         self.assertEquals(len(related_files), 1)
+
         self.assertEquals(related_files[0][1], self.admin_controller_path)
 
     def testTypePathCanContainWildcardStringToSpecifyModuleDirectories(self):

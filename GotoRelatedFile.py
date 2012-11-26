@@ -143,10 +143,17 @@ class FileSelector(object):
         )
 
         current_suffix = current_file_type_details.get('suffix', '')
+        current_prefix = current_file_type_details.get('prefix', '')
 
         current_file_no_ext = os.path.splitext(self.current_file)[0]
         current_file_no_suffix = re.sub('%s$' % re.escape(current_suffix), '', current_file_no_ext)
-        current_file = re.sub('%s$' % re.escape(current_suffix), '', current_file_no_suffix)
+        current_file_no_fixes = re.sub(
+            '%s([^%s]+)$' % (re.escape(current_prefix), re.escape(os.sep)),
+            '\g<1>',
+            current_file_no_suffix
+        )
+        current_file = current_file_no_fixes
+
         current_file_type_path = os.path.join(self.app_path, current_file_type_path)
 
         file_from_type_path = current_file.replace(current_file_type_path, '', 1)
@@ -154,6 +161,7 @@ class FileSelector(object):
         dir_from_type_path = os.path.dirname(file_from_type_path)
 
         return {
+            'base_filename': os.path.basename(current_file),
             'file_from_type_path': file_from_type_path,
             'file_from_app_path': file_from_app_path,
             'dir_from_type_path': dir_from_type_path
@@ -199,6 +207,7 @@ class FileSelector(object):
 
             target_file_type_details = self._get_file_type_details(file_type)
             target_suffix = target_file_type_details.get('suffix', '')
+            target_prefix = target_file_type_details.get('prefix', '')
 
             target_file_type_path = target_file_type_details.get('path', '').replace('/', os.sep)
 
@@ -209,10 +218,18 @@ class FileSelector(object):
             glob_pattern = template.safe_substitute(
                 app_path=self.app_path,
                 type_path=target_file_type_path,
+                base_filename=template_vars['base_filename'],
                 file_from_type_path=template_vars['file_from_type_path'],
                 file_from_app_path=template_vars['file_from_app_path'],
                 dir_from_type_path=template_vars['dir_from_type_path'],
-                suffix=target_suffix
+                suffix=''  # For backward compatability
+            )
+
+            # Add prefix and suffix to glob_pattern
+            glob_pattern = re.sub(
+                '(.+?)([^%s]+)\.(.+)$' % re.escape(os.sep),
+                '\g<1>%s\g<2>%s.\g<3>' % (target_prefix, target_suffix),
+                glob_pattern
             )
 
             # Collect matches
