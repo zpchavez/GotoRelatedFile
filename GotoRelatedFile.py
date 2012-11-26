@@ -227,7 +227,7 @@ class FileSelector(object):
 
             # Add prefix and suffix to glob_pattern
             glob_pattern = re.sub(
-                '(.+?)([^%s]+)\.(.+)$' % re.escape(os.sep),
+                '(.+?)([^%s]+)\.([^.]+)$' % re.escape(os.sep),
                 '\g<1>%s\g<2>%s.\g<3>' % (target_prefix, target_suffix),
                 glob_pattern
             )

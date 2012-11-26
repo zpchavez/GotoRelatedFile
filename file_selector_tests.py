@@ -180,6 +180,29 @@ class TestFileSelector(unittest.TestCase):
         self.createFile(self.view_path)
         self.createFile(self.template_path)
 
+    def setUpFilesForPyConfigWithDotsInPath(self):
+        """
+            Set up the following files:
+            test_data/application/controllers/dot.dir/foo.py
+            test_data/application/views/dot.dir/foo/bar.py
+            test_data/application/templates/dot.dir/foo/bar.html
+
+            and save their paths to instance variables.
+        """
+        base_path = os.sep.join([self.test_data_path, 'application'])
+
+        os.makedirs(os.sep.join([base_path, 'controllers', 'dot.dir']))
+        os.makedirs(os.sep.join([base_path, 'views', 'dot.dir', 'foo']))
+        os.makedirs(os.sep.join([base_path, 'templates', 'dot.dir', 'foo']))
+
+        self.controller_path = os.sep.join([base_path, 'controllers', 'dot.dir', 'foo.py'])
+        self.view_path = os.sep.join([base_path, 'views', 'dot.dir', 'foo', 'bar.py'])
+        self.template_path = os.sep.join([base_path, 'templates', 'dot.dir', 'foo', 'bar.html'])
+
+        self.createFile(self.controller_path)
+        self.createFile(self.view_path)
+        self.createFile(self.template_path)
+
     def setUpFilesWithTopLevelModules(self):
         """
             Set up the following files:
@@ -343,6 +366,24 @@ class TestFileSelector(unittest.TestCase):
         # Test template vars app_path, type_path,
         # file_from_type_path, and dir_from_type_path
         self.setUpFilesForPyConfig()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.view_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+        self.assertEquals(len(related_files), 2)
+        self.assertEquals(related_files[0][1], self.controller_path)
+        self.assertEquals(related_files[0][0], 'Open controller (foo.py)')
+        self.assertEquals(related_files[1][1], self.template_path)
+        self.assertEquals(related_files[1][0], 'Open template (bar.html)')
+
+    def testBugFixedThatPreventedMatchesFromBeingFoundWhenDirNamesHaveDots(self):
+        self.setUpFilesForPyConfigWithDotsInPath()
 
         file_selector = FileSelector(
             sublime.active_window(),
