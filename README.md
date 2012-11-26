@@ -64,6 +64,13 @@ js/modules/{%}
 When searching for related files, GotoRelatedFile will replace the {%} in the
 target path with whatever was contained in the {%} for the current file.
 
+Project Settings
+----------------
+
+You can specify which configurations to use per project by adding a
+"settings" dict to the .sublime-project file and defining "enabled_configurations"
+there.
+
 Tests
 =====
 

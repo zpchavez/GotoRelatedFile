@@ -42,6 +42,7 @@ class FileSelector(object):
     def __init__(self, window, config_file, current_file):
         self.settings = sublime.load_settings(config_file)
         self.window = window
+        self.view = window.active_view()
         self.wildcard_vals_in_type_path = []
         self.current_file = current_file
         self.configuration = self._get_configuration()
@@ -70,7 +71,11 @@ class FileSelector(object):
         if not self.current_file:
             return None
 
-        configs = self.settings.get('enabled_configurations', [])
+        # If project-specific enabled_configurations exist, use those.
+        if self.view.settings().get('enabled_configurations'):
+            configs = self.view.settings().get('enabled_configurations')
+        else:
+            configs = self.settings.get('enabled_configurations', [])
 
         valid_configs = {}
         for config in configs:
