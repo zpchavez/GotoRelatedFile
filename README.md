@@ -5,30 +5,70 @@ are related to the current one, e.g. the views related to a controller.
 
 Installation
 ============
-GotoRelatedFile is not in package control at this time.  You can add it manually
-by selecting "Package Control: Add Repository" from the Command Palette.
+GotoRelatedFile is not in package control at this time. You can add it manually
+by first adding the repository by selecting "Package Control: Add Repository"
+from the Command Palette and typing in the repo's URL (without the .git), and then
+selecting "Package Control: Install Package" and selecting GotoRelatedFile.
+
+Usage
+=====
+The default key binding to bring up the list of related files is ctrl+shift+r on Windows
+and Linux and cmd+shift+r on OSX.
 
 Configuration
 =============
 GotoRelatedFile is customizable to different project directory structures.
 See the default settings file to see how it works.
 
+To determine which configuration to use, GotoRelatedFile will go through the
+enabled_configurations and use the first one whose app_dir is found in the
+path of the current file.
+
+Placeholders
+------------
+
 The placeholders used in the rel_patterns strings are:
 
    * app_path  - The absolute path to the application directory.
    * type_path - The path to where files of the target type are found, relative to the app path.
-   * suffix - The suffix of the target file type, if one is defined.
-   * file_from_type_path - The path to the starting file, minus the extension and suffix, relative to the type_path
-   * file_from_app_path - The path to the starting file, minus the extension and suffix, relative to the app_path.
+   * base_filename - The filename without the path or extension.
+   * file_from_type_path - The path to the starting file, minus the extension, relative to the type_path
+   * file_from_app_path - The path to the starting file, minus the extension, relative to the app_path.
    * dir_from_type_path - The path to the starting file's directory relative to the type_path
 
-GotoRelatedFile will go through the enabled_configurations and use the first one whose
-app_dir is found in the path of the current file.
+Suffixes and Prefixes
+---------------------
 
-Usage
+You can define a suffix or prefix for any file type.  The fix will be removed or added as needed
+when searching for related files.
+
+Modules
+-------
+
+You may use the string {%} in an app_dir or path value to represent a directory
+that separates the app into a module.  For example, if your project has:
+
+js/modules/public
+js/modules/admin
+
+You can either define your type paths like so:
+
+modules/{%}/controllers
+modules/{%}/views
+
+Or, if no part of your application exists outside of a module, you can
+define your app_dir as:
+
+js/modules/{%}
+
+When searching for related files, GotoRelatedFile will replace the {%} in the
+target path with whatever was contained in the {%} for the current file.
+
+Tests
 =====
-The default key binding to bring up the list of related files is ctrl+shift+r on Windows
-and Linux and cmd+shift+r on OSX.
+
+GotoRelatedFile has tests.  To run them, assign a key binding to
+the command show_goto_related_file_test_suites.
 
 License
 =======
