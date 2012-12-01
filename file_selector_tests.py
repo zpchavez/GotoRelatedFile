@@ -337,7 +337,7 @@ class TestFileSelector(unittest.TestCase):
         file_selector = FileSelector(
             sublime.active_window(),
             self.settings_file,
-            '/path/to/application/views/view.php'
+            os.sep.join(['path', 'to', 'application', 'views', 'view.php'])
         )
 
         self.assertNotEquals(file_selector.configuration, None)
@@ -352,7 +352,7 @@ class TestFileSelector(unittest.TestCase):
         file_selector = FileSelector(
             sublime.active_window(),
             self.settings_file,
-            '/path/to/application/views/view.php'
+            os.sep.join(['path', 'to', 'application', 'views', 'view.php'])
         )
 
         self.assertNotEquals(file_selector.configuration, None)

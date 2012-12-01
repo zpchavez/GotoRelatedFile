@@ -85,9 +85,10 @@ class FileSelector(object):
 
         for config_key in sorted(valid_configs):
             possible_app_dir = valid_configs[config_key]['app_dir'] \
-                .replace('/', os.sep) \
-                .replace('{%}', '[^' + os.sep + ']+')
+                .replace('/', os.sep)
             search_string = os.sep + possible_app_dir + os.sep
+            search_string = re.escape(search_string) \
+                .replace(re.escape('{%}'), '[^' + re.escape(os.sep) + ']+')
             match = re.search(
                 '^(.*?%s)' % search_string,
                 self.current_file
@@ -99,7 +100,10 @@ class FileSelector(object):
 
     def _get_current_file_type(self):
         for file_type, details in self.configuration['file_types'].items():
-            type_path = self._get_file_type_path(details['path'], self.current_file)
+            type_path = self._get_file_type_path(
+                details['path'].replace('/', os.sep),
+                self.current_file
+            )
 
             if not type_path:
                 continue
@@ -127,8 +131,11 @@ class FileSelector(object):
         if '{%}' not in path_pattern:
             return path_pattern
 
+        pattern = re.escape(path_pattern) \
+            .replace(re.escape('{%}'), '([^' + re.escape(os.sep) + ']+)')
+
         match = re.search(
-            path_pattern.replace('{%}', '([^' + os.sep + ']+)'),
+            pattern,
             file_path
         )
         if match:
