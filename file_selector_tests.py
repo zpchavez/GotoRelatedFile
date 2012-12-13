@@ -224,7 +224,11 @@ class TestFileSelector(unittest.TestCase):
         self.admin_controller_path = os.sep.join(
             [admin_base_path, 'controllers', 'foo_controller.js']
         )
+
         self.admin_view_path = os.sep.join([admin_base_path, 'views', 'foo', 'bar.js'])
+
+        self.admin_template_path = os.sep.join([admin_base_path, 'templates', 'foo', 'bar.hbs'])
+
         self.public_controller_path = os.sep.join(
             [public_base_path, 'controllers', 'foo_controller.js']
         )
@@ -256,10 +260,15 @@ class TestFileSelector(unittest.TestCase):
         self.admin_controller_path = os.sep.join(
             [admin_base_path, 'controllers', 'foo_controller.js']
         )
+
         self.admin_view_path = os.sep.join([admin_base_path, 'views', 'foo', 'bar.js'])
+
+        self.admin_template_path = os.sep.join([admin_base_path, 'templates', 'foo', 'bar.hbs'])
+
         self.public_controller_path = os.sep.join(
             [public_base_path, 'controllers', 'foo_controller.js']
         )
+
         self.public_view_path = os.sep.join([public_base_path, 'views', 'foo', 'baz.js'])
 
         self.createFile(self.admin_controller_path)
@@ -321,6 +330,10 @@ class TestFileSelector(unittest.TestCase):
             Also set instance variable with path where
             controller should be created, and create
             the directory.
+
+            Set a controller and template path but don't create them.
+
+            Create the dir for the controller, but not the file.
         """
         base_path = os.sep.join([self.test_data_path, 'js', 'app'])
 
@@ -329,6 +342,7 @@ class TestFileSelector(unittest.TestCase):
 
         self.view_path = os.sep.join([base_path, 'views', 'bar', 'baz.js'])
         self.controller_path = os.sep.join([base_path, 'controllers', 'bar_controller.js'])
+        self.template_path = os.sep.join([base_path, 'templates', 'bar', 'baz.hbs'])
 
         self.createFile(self.view_path)
 
@@ -491,10 +505,11 @@ class TestFileSelector(unittest.TestCase):
         self.assertTrue(file_selector.files_found)
 
         related_files = file_selector.related_files
-        self.assertEquals(len(related_files), 1)
+        self.assertEquals(len(related_files), 2)
         self.assertEquals(related_files[0][1], self.controller_path)
         self.assertEquals(related_files[0][0], 'Create controller (bar_controller.js)')
-        # No option to create template, since target directory does not exist.
+        self.assertEquals(related_files[1][1], self.template_path)
+        self.assertEquals(related_files[1][0], 'Create template (baz.hbs)')
 
     def testAppDirCanContainWildcardStringToSpecifyModuleDirectories(self):
         self.createJsSettingsWithTopLevelModules()
@@ -509,9 +524,10 @@ class TestFileSelector(unittest.TestCase):
         self.assertTrue(file_selector.files_found)
 
         related_files = file_selector.related_files
-        self.assertEquals(len(related_files), 1)
+        self.assertEquals(len(related_files), 2)
 
         self.assertEquals(related_files[0][1], self.admin_controller_path)
+        self.assertEquals(related_files[1][1], self.admin_template_path)
 
     def testTypePathCanContainWildcardStringToSpecifyModuleDirectories(self):
         self.createJsSettingsWithModuleDirWithinTypePaths()
@@ -526,5 +542,6 @@ class TestFileSelector(unittest.TestCase):
         self.assertTrue(file_selector.files_found)
 
         related_files = file_selector.related_files
-        self.assertEquals(len(related_files), 1)
+        self.assertEquals(len(related_files), 2)
         self.assertEquals(related_files[0][1], self.admin_controller_path)
+        self.assertEquals(related_files[1][1], self.admin_template_path)

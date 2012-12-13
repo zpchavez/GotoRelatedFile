@@ -55,6 +55,8 @@ class FileSelector(object):
     def select(self, index):
         if index != -1:
             selected_file = self.related_files[index][1]
+            if not os.path.isdir(os.path.dirname(selected_file)):
+                os.makedirs(os.path.dirname(selected_file))
             self.window.open_file(selected_file)
 
     def get_items(self):
@@ -187,11 +189,7 @@ class FileSelector(object):
         return file_type_details
 
     def _is_creatable_file(self, glob_pattern):
-        if '*' not in glob_pattern:
-            creatable_file_path = os.path.realpath(glob_pattern)
-            return os.path.isdir(os.path.dirname(creatable_file_path))
-
-        return False
+        return '*' not in glob_pattern
 
     def _get_related_files(self):
         """
