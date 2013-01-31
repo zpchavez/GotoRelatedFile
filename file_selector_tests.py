@@ -67,6 +67,26 @@ class TestFileSelector(unittest.TestCase):
 
         settings.set('js', config)
 
+    def createJsSettingsWithFilesAboveAppPath(self):
+        settings = self.createDefaultSettings()
+
+        config = self.getJsConfig()
+
+        config['file_types']['view']['rel_patterns']['scss'] = \
+            "${app_path}/${type_path}/${file_from_type_path}.scss"
+
+        del config['file_types']['view']['rel_patterns']['controller']
+        del config['file_types']['view']['rel_patterns']['template']
+
+        config['file_types']['scss'] = {
+            'path': '../scss',
+            'rel_patterns': {
+                'view': '${app_path}/${type_path}/${file_from_type_path}.js'
+            }
+        }
+
+        settings.set('js', config)
+
     def createJsSettingsWithTopLevelModules(self):
         settings = self.createDefaultSettings()
 
@@ -275,6 +295,25 @@ class TestFileSelector(unittest.TestCase):
         self.createFile(self.admin_view_path)
         self.createFile(self.public_controller_path)
         self.createFile(self.public_view_path)
+
+    def setUpFilesAboveAppPath(self):
+        """
+            Set up the following files:
+            test_data/js/app/views/foo/bar.js
+            test_data/js/scss/foo/bar.scss
+
+            and save their paths to instance variables.
+        """
+        base_path = os.sep.join([self.test_data_path, 'js'])
+
+        os.makedirs(os.sep.join([base_path, 'app', 'views', 'foo']))
+        os.makedirs(os.sep.join([base_path, 'scss', 'foo', 'foo']))
+
+        self.view_path = os.sep.join([base_path, 'app', 'views', 'foo', 'bar.js'])
+        self.scss_path = os.sep.join([base_path, 'scss', 'foo', 'bar.scss'])
+
+        self.createFile(self.view_path)
+        self.createFile(self.scss_path)
 
     def setUpFooFilesForJsConfig(self):
         """
@@ -545,3 +584,37 @@ class TestFileSelector(unittest.TestCase):
         self.assertEquals(len(related_files), 2)
         self.assertEquals(related_files[0][1], self.admin_controller_path)
         self.assertEquals(related_files[1][1], self.admin_template_path)
+
+    def testCanMatchPathWithTypeWhoseTypePathContainsDirectoryTraversal(self):
+        self.createJsSettingsWithFilesAboveAppPath()
+        self.setUpFilesAboveAppPath()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.view_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+
+        self.assertEquals(len(related_files), 1)
+        self.assertEquals(related_files[0][1], self.scss_path)
+
+    def testCanMatchPathFromTypeWhoseTypePathContainsDirectoryTraversal(self):
+        self.createJsSettingsWithFilesAboveAppPath()
+        self.setUpFilesAboveAppPath()
+
+        file_selector = FileSelector(
+            sublime.active_window(),
+            self.settings_file,
+            self.scss_path
+        )
+
+        self.assertTrue(file_selector.files_found)
+
+        related_files = file_selector.related_files
+        self.assertEquals(len(related_files), 1)
+        self.assertEquals(related_files[0][1], self.view_path)
+

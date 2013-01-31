@@ -85,20 +85,70 @@ class FileSelector(object):
             if config_details:
                 valid_configs[config] = config_details
 
-        for config_key in sorted(valid_configs):
-            possible_app_dir = valid_configs[config_key]['app_dir'] \
-                .replace('/', os.sep)
-            search_string = os.sep + possible_app_dir + os.sep
-            search_string = re.escape(search_string) \
-                .replace(re.escape('{%}'), '[^' + re.escape(os.sep) + ']+')
-            match = re.search(
-                '^(.*?%s)' % search_string,
-                self.current_file
-            )
-            if match:
-                self.app_path = match.group(0).rstrip(os.sep)
-                return valid_configs[config_key]
+        paths = self._get_possible_paths(valid_configs)
+
+        for config_key, path_dict in paths.items():
+            app_path = path_dict['app_path']
+            for path in path_dict['paths']:
+
+                search_string = os.sep + path + os.sep
+
+                # Module wildcard {%} can match anything except directory separators.
+                search_string = re.escape(search_string) \
+                    .replace(
+                        re.escape('{%}'),
+                        '(?P<module>[^' + re.escape(os.sep) + ']+)'
+                    )
+
+                match = re.search(
+                    '^(.*?%s)' % search_string,
+                    self.current_file
+                )
+                if match:
+                    if 'module' in match.groupdict():
+                        app_path = app_path.replace('{%}', match.group('module'))
+                        path = path.replace('{%}', match.group('module'))
+
+                    path_before_app_path = match.group(0).rstrip(os.sep).replace(path, '')
+                    self.app_path = path_before_app_path + app_path
+
+                    return valid_configs[config_key]
+
         return None
+
+    def _get_possible_paths(self, configs):
+        """
+        Get a dict where keys are configuration names and values are dicts
+        with keys 'app_path' and 'paths'.
+
+        'paths' will include the app_path, as well as any other possible paths
+        for that configuration which are implied by directory traversals in
+        type paths.
+
+        :Args:
+            - configs: a dict of config settings
+
+        """
+        possible_paths_for_app_path = {}
+
+        for config_key in sorted(configs):
+            app_dir = configs[config_key]['app_dir'].replace('/', os.sep)
+            paths = [app_dir]
+
+            possible_paths_for_app_path[config_key] = {'app_path': app_dir}
+
+            for file_type, file_type_details in configs[config_key]['file_types'].items():
+                type_path = file_type_details['path']
+                if '..' in type_path:
+                    path_outside_of_app_path = os.path.realpath(
+                            app_dir + os.sep + type_path
+                        ).replace(os.path.realpath('.') + os.sep, '')
+
+                    paths.append(path_outside_of_app_path)
+
+            possible_paths_for_app_path[config_key]['paths'] = paths
+
+        return possible_paths_for_app_path
 
     def _get_current_file_type(self):
         for file_type, details in self.configuration['file_types'].items():
@@ -110,10 +160,12 @@ class FileSelector(object):
             if not type_path:
                 continue
 
-            search_string = os.path.join(
+            search_string = os.path.realpath(
+                os.path.join(
                     self.app_path,
                     type_path
                 ).replace('/', os.sep)
+            )
 
             match = re.search(
                 '^%s' % re.escape(search_string),
@@ -168,7 +220,9 @@ class FileSelector(object):
         )
         current_file = current_file_no_fixes
 
-        current_file_type_path = os.path.join(self.app_path, current_file_type_path)
+        current_file_type_path = os.path.realpath(
+            os.path.join(self.app_path, current_file_type_path)
+        )
 
         file_from_type_path = current_file.replace(current_file_type_path, '', 1).strip(os.sep)
         file_from_app_path = current_file.replace(self.app_path, '', 1).strip(os.sep)
