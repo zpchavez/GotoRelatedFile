@@ -282,6 +282,7 @@ class FileSelector(object):
             glob_pattern = template.safe_substitute(
                 app_path=self.app_path,
                 type_path=target_file_type_path,
+                full_type_path=self.app_path + os.sep + target_file_type_path,
                 base_filename=template_vars['base_filename'],
                 file_from_type_path=template_vars['file_from_type_path'],
                 file_from_app_path=template_vars['file_from_app_path'],

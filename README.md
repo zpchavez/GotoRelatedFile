@@ -31,10 +31,11 @@ The placeholders used in the rel_patterns strings are:
 
    * app_path  - The absolute path to the application directory.
    * type_path - The path to where files of the target type are found, relative to the app path.
+   * full_type_path - (Somewhat) shorter alias for app_path/type_path.
    * base_filename - The filename without the path or extension.
-   * file_from_type_path - The path to the starting file, minus the extension, relative to the type_path
+   * file_from_type_path - The path to the starting file, minus the extension, relative to the type_path.
    * file_from_app_path - The path to the starting file, minus the extension, relative to the app_path.
-   * dir_from_type_path - The path to the starting file's directory relative to the type_path
+   * dir_from_type_path - The path to the starting file's directory relative to the type_path.
 
 Suffixes and Prefixes
 ---------------------
