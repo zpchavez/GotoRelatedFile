@@ -1,7 +1,8 @@
 GotoRelatedFile
 ===============
 GotoRelatedFile is a Sublime plugin that allows easy navigation to files that
-are related to the current one, e.g. the views related to a controller.
+are related to the current one, e.g. the views related to a controller.  It
+also allows you to easily create related files that don't exist yet.
 
 Installation
 ============
