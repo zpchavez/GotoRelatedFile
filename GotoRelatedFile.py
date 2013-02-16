@@ -182,10 +182,12 @@ class FileSelector(object):
         with the actual value used in the file path.
 
         """
-        if '{%}' not in path_pattern:
-            return path_pattern
+        pattern = os.path.realpath(self.app_path + os.sep + path_pattern)
 
-        pattern = re.escape(path_pattern) \
+        if '{%}' not in pattern:
+            return pattern
+
+        pattern = re.escape(pattern) \
             .replace(re.escape('{%}'), '([^' + re.escape(os.sep) + ']+)')
 
         match = re.search(
