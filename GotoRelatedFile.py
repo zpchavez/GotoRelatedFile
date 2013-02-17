@@ -151,7 +151,13 @@ class FileSelector(object):
         return possible_paths_for_app_path
 
     def _get_current_file_type(self):
-        for file_type, details in self.configuration['file_types'].items():
+
+        # Sort types backwards, so that *, if present, is last.
+        types = self.configuration['file_types'].items()
+        types.sort()
+        types.reverse()
+
+        for file_type, details in types:
             type_path = self._get_file_type_path(
                 details['path'].replace('/', os.sep),
                 self.current_file
